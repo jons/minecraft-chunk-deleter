@@ -25,6 +25,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package nl.joranderaaff.minecraft.chunkdeleter;
 
+import java.io.File;
+
+import com.mojang.LevelFile;
+
 import jargs.gnu.CmdLineParser;
 import jargs.gnu.CmdLineParser.IllegalOptionValueException;
 import jargs.gnu.CmdLineParser.UnknownOptionException;
@@ -59,6 +63,9 @@ public class Main {
 		String levelPathString = (String) parser.getOptionValue(worldFolderArg);
 		//get the blocktypes
 		String blockIDString = (String)parser.getOptionValue(blockIDsArg);
+
+		final File leveldata = new File(levelPathString, "level.dat");
+		new LevelFile(leveldata);
 		
 		if(blockIDString == null) {
 			System.out.println("There are no blocktypes found in the arguments");
