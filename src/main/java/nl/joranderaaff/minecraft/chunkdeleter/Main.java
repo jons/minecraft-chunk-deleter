@@ -45,6 +45,7 @@ public class Main {
 		CmdLineParser.Option blockIDsArg = parser.addStringOption("blockIDs");
 		CmdLineParser.Option worldFolderArg = parser.addStringOption("worldFolder");
 		CmdLineParser.Option defragmentArg = parser.addBooleanOption("defragment");
+		CmdLineParser.Option radiusArg = parser.addIntegerOption("radius");
 		
 		try {
 			parser.parse(args);
@@ -71,10 +72,12 @@ public class Main {
 		//get the min and max Y
 		int minY = (Integer) parser.getOptionValue(minYArg, new Integer(0));
 		int maxY = (Integer) parser.getOptionValue(maxYArg, new Integer(127));
+		// get the protection radius
+		int radius = (Integer) parser.getOptionValue(radiusArg, new Integer(0));
 		
 		//The actual deletion takes place here.
 		Deleter chunkDeleter = new Deleter();
-		chunkDeleter.deleteChunks(levelPathString, blockIDs, border, minY, maxY);
+		chunkDeleter.deleteChunks(levelPathString, blockIDs, border, minY, maxY, radius);
 		
 		//defragmentation of the files. this is still experimental
 		Boolean defragment = (Boolean) parser.getOptionValue(defragmentArg, false);

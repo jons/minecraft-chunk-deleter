@@ -34,12 +34,12 @@ import java.util.Map;
 import com.mojang.RegionFile;
 import com.mojang.Tag;
 
-public class Deleter {
-
+public class Deleter
+{
 	private Map<String, Boolean> markedSafe;
 
-	public void deleteChunks(String levelPathString, String[] blockTypes, int border, int minY, int maxY) {
-
+	public void deleteChunks(String levelPathString, String[] blockTypes, int border, int minY, int maxY, int radius)
+	{
 		markedSafe = new HashMap<String, Boolean>();
 
 		HashMap<Integer, Boolean> blockTypesMap = new HashMap<Integer, Boolean>();
@@ -186,9 +186,10 @@ public class Deleter {
 										int realy = (sy * 16) + by;
 										if ((minY <= realy) && (realy <= maxY))
 										{
-											int blockIndex = by + ( bz * 16 + ( bx * 16 * 16 ) );
+											// YZX coordinates
+											int blockIndex = bx + ( bz * 16 + ( by * 16 * 16 ) );
 											byte blockID = blockIDs[blockIndex];
-											int blockIDInt = (int) blockID & 0xFF;
+											int blockIDInt = (int)(blockID & 0xFF);
 		
 											if (blockTypes.containsKey(blockIDInt))
 											{
