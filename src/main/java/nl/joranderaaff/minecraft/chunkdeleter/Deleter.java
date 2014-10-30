@@ -22,7 +22,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
-	
+
 package nl.joranderaaff.minecraft.chunkdeleter;
 
 import java.io.File;
@@ -35,15 +35,15 @@ import com.mojang.RegionFile;
 import com.mojang.Tag;
 
 public class Deleter {
-	
+
 	private Map<String, Boolean> markedSafe;
-	
+
 	public void deleteChunks(String levelPathString, String[] blockTypes, int border, int minY, int maxY) {
-				
+
 		markedSafe = new HashMap<String, Boolean>();
-		
+
 		HashMap<Integer, Boolean> blockTypesMap = new HashMap<Integer, Boolean>();
-		
+
 		int blockTypesCount = 0;
 		for (int i = 0; i < blockTypes.length; i++)
 		{
@@ -51,25 +51,25 @@ public class Deleter {
 			blockTypesMap.put(blockType, true);
 			blockTypesCount ++;
 		}
-		
+
 		if(blockTypesCount == 0) {
 			System.out.println("No valid blocktypes given.");
 			return;
 		}
-		
+
 		ArrayList<RegionFileInfo> regionFileInfos = new ArrayList<RegionFileInfo>();
-		
+
 		System.out.println("Looking for blocktypes: " + blockTypesMap);
 		System.out.println("Border to keep around safe chunks: " + border);
-		
+
 		File levelPath = new File(levelPathString, "region");
-		
+
 		if(!levelPath.exists()) {
 			System.out.println("This path does not exist: " + levelPath.getAbsolutePath());
 		}
-		
+
 		String[] files = levelPath.list();
-		
+
 		if (files != null)
 		{
 		    for (int i=0; i < files.length; i++)
@@ -80,7 +80,7 @@ public class Deleter {
 		        File filePath = new File(levelPath.toString(), files[i]);
 		        if (filePath.isFile()) {
 				final String pathname = filePath.toString();
-				if (pathname.endsWith(".mcr") || pathname.endsWith(".mca")) {
+				if (pathname.endsWith(".mcr")) {
 			        	// Get filename parts
 			        	String[] fileNameParts = fileName.split("\\.");
 			        	// Get region coordinates from filename
@@ -89,35 +89,38 @@ public class Deleter {
 			        	RegionFileInfo info = new RegionFileInfo(filePath, regionX, regionZ);
 				        regionFileInfos.add(info);
 				}
+				else if (pathname.endsWith(".mca")) {
+					// TODO: support anvil file
+				}
 		        }
 		    }
-		} 
-		
+		}
+
 		System.out.println("Search between Y: " + minY + " and " + maxY);
-		
+
 		//cap these values!
 		minY = Math.max(minY, 0);
 		maxY = Math.min(maxY, 127);
-		
+
 		System.out.println("-----------------------------------");
-		
+
 		for (int i = 0; i < regionFileInfos.size(); i++) {
 			RegionFileInfo info = regionFileInfos.get(i);
 	        System.out.println("Searching blocks in " + info.filePath.toString());
-	        //find 'human active' chunks and store them in 
+	        //find 'human active' chunks and store them in
 	        markSafeChunks(info.filePath, info.regionX, info.regionZ, border, minY, maxY, blockTypesMap);
 		}
-		
+
 		System.out.println("-----------------------------------");
-		
+
 		for (int i = 0; i < regionFileInfos.size(); i++) {
 			RegionFileInfo info = regionFileInfos.get(i);
 	        System.out.println("Deleting chunks in " + info.filePath.toString());
-	        //find 'human active' chunks and store them in 
+	        //find 'human active' chunks and store them in
 	        deleteUnsavedChunks(info.filePath, info.regionX, info.regionZ);
 		}
 	}
-	
+
 	private void deleteUnsavedChunks(File filePath, int regionX, int regionZ) {
 		RegionFile regionFile = new RegionFile(filePath);
 		int chunksDeleted = 0;
@@ -129,9 +132,9 @@ public class Deleter {
 				{
 					int chunkX = (regionX * 32 + x);
 					int chunkZ = (regionZ * 32 + z);
-					
+
 					String id = chunkX + "_" + chunkZ;
-					
+
 					if(!markedSafe.containsKey(id)) {
 						chunksDeleted++;
 						regionFile.deleteChunck(x, z);
@@ -139,16 +142,16 @@ public class Deleter {
 				}
  			}
 		}
-		
+
 		System.out.println("Chunks deleted: " + chunksDeleted);
-		
+
 		try {
 			regionFile.close();
 		} catch (IOException e) {
 			System.out.println("error while closing region file");
 		}
 	}
-	
+
 	private void markSafeChunks(File filePath, int regionX, int regionZ, int border, int minY, int maxY, HashMap<Integer, Boolean> blockTypes)
 	{
 		RegionFile regionFile = new RegionFile(filePath);
@@ -161,16 +164,16 @@ public class Deleter {
 				{
 					int chunkX = (regionX * 32 + x);
 					int chunkZ = (regionZ * 32 + z);
-					
+
 					validBlockFound = false;
-					
+
 					try
 					{
 						Tag tag = Tag.readFrom(regionFile.getChunkDataInputStream(x, z));
 						Tag levelData = tag.findTagByName("Level");
 						Tag blocks = levelData.findTagByName("Blocks");
 						byte[] blockIDs = (byte[]) blocks.getValue();
-						
+
 						for(int bx = 0; bx < 16; bx++)
 						{
 							for(int bz = 0; bz < 16; bz ++)
@@ -180,7 +183,7 @@ public class Deleter {
 									int blockIndex = by + ( bz * 128 + ( bx * 128 * 16 ) );
 									byte blockID = blockIDs[blockIndex];
 									int blockIDInt = (int) blockID & 0xFF;
-									
+
 									if( blockTypes.containsKey(blockIDInt) )
 									{
 										for (int surX = chunkX - border; surX <= chunkX + border; surX++) {
@@ -200,7 +203,7 @@ public class Deleter {
 							if(validBlockFound)
 								break;
 						}
-					} 
+					}
 					catch (IOException e)
 					{
 						System.out.println("error while reading Tag");
@@ -214,7 +217,7 @@ public class Deleter {
 			System.out.println("error while closing region file");
 		}
 	}
-	
+
 	private class RegionFileInfo {
 		public File filePath;
 		public int regionX;
