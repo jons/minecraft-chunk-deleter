@@ -1,0 +1,35 @@
+minecraft-chunk-deleter
+
+see:
+
+https://code.google.com/p/minecraft-chunk-deleter/
+http://www.minecraftwiki.net/wiki/Data_values
+http://hydra-media.cursecdn.com/minecraft.gamepedia.com/d/d1/DataValues.svg
+
+
+command line arguments
+
+--worldFolder
+
+path to the folder containing your minecraft world
+
+--blockIDs
+
+a comma-seperated list of block ID values. if a blocktype in this list is found in a chunk, it will not be deleted.
+
+--minY
+
+the minimum height to scan for blocks (optional, default is 0)
+
+--maxY
+
+the maximum height to scan for blocks (optional, default is 127)
+
+--border
+
+the border to keep around safe chunks (optional, default is 0)
+
+--defragment
+
+if specified, the tool will also defragment your files (default is false)
+
