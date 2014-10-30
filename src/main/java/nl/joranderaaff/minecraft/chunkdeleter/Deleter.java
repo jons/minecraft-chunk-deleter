@@ -173,9 +173,12 @@ public class Deleter
 						
 						for (Tag block : blocks)
 						{
+							// section's base Y value
 							int sy = (byte)block.findTagByName("Y").getValue();
 
-							byte[] blockIDs = (byte[]) block.findTagByName("Blocks").getValue();
+							byte[] blockIDs = (byte[])block.findTagByName("Blocks").getValue();
+							Tag addTag = block.findTagByName("Add");
+							byte[] addIDs = addTag != null ? (byte[])addTag.getValue() : null;
 
 							for (int bx = 0; bx < 16; bx++)
 							{
@@ -183,14 +186,24 @@ public class Deleter
 								{
 									for (int by = 0; by < 16; by++)
 									{
+										// real Y, used to support min/max Y
 										int realy = (sy * 16) + by;
 										if ((minY <= realy) && (realy <= maxY))
 										{
 											// YZX coordinates
 											int blockIndex = bx + ( bz * 16 + ( by * 16 * 16 ) );
-											byte blockID = blockIDs[blockIndex];
-											int blockIDInt = (int)(blockID & 0xFF);
-		
+
+											// extended block IDs
+											byte a = blockIDs[blockIndex];
+											int blockIDInt = a;
+											if (addIDs != null) {
+												byte b = addIDs[blockIndex/2];
+												if (blockIndex % 2 != 0)
+													b >>= 4;
+												b &= 0x0f;
+												blockIDInt = (int)((a + (b << 8)) & 0xFF);
+											}
+
 											if (blockTypes.containsKey(blockIDInt))
 											{
 												for (int surX = chunkX - border; surX <= chunkX + border; surX++)
