@@ -7,7 +7,12 @@ http://www.minecraftwiki.net/wiki/Data_values
 http://hydra-media.cursecdn.com/minecraft.gamepedia.com/d/d1/DataValues.svg
 
 
-command line arguments
+building:
+
+i've included a maven POM file. just run 'mvn package' and copy the .jar out of target/
+
+
+command line arguments:
 
 --worldFolder
 
