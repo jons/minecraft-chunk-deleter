@@ -64,23 +64,22 @@ public class Deleter
 
 		File levelPath = new File(levelPathString, "region");
 
-		if(!levelPath.exists()) {
+		if (!levelPath.exists()) {
 			System.out.println("This path does not exist: " + levelPath.getAbsolutePath());
 		}
 
-		String[] files = levelPath.list();
+		final String[] files = levelPath.list();
 
 		if (files != null)
 		{
-		    for (int i=0; i < files.length; i++)
+		    for (int i = 0; i < files.length; i++)
 		    {
 		        // Get filename of file or directory
-		    	String fileName = files[i];
-		    	//total filepath
-		        File filePath = new File(levelPath.toString(), files[i]);
+		    	final String fileName = files[i];
+		        final File filePath = new File(levelPath.toString(), fileName);
+		        
 		        if (filePath.isFile()) {
-		        	final String pathname = filePath.toString();
-		        	if (pathname.endsWith(".mcr") || pathname.endsWith(".mca")) {
+		        	if (filePath.toString().endsWith(".mca")) {
 			        	// Get filename parts
 			        	String[] fileNameParts = fileName.split("\\.");
 			        	// Get region coordinates from filename
@@ -93,19 +92,22 @@ public class Deleter
 		    }
 		}
 
-		System.out.println("Search between Y: " + minY + " and " + maxY);
-
-		//cap these values!
+		// cap these values!
 		minY = Math.max(minY, 0);
 		maxY = Math.min(maxY, 127);
+		radius = Math.max(radius, 0);
+		
+		System.out.println("Search between Y: " + minY + " and " + maxY);
+		if (radius > 0)
+			System.out.println("Protected X/Z Radius: " + radius);
 
 		System.out.println("-----------------------------------");
 
 		for (int i = 0; i < regionFileInfos.size(); i++) {
 			RegionFileInfo info = regionFileInfos.get(i);
 	        System.out.println("Searching blocks in " + info.filePath.toString());
-	        //find 'human active' chunks and store them in
-	        markSafeChunks(info.filePath, info.regionX, info.regionZ, border, minY, maxY, blockTypesMap);
+	        // find 'human active' chunks and store them in a map of "saved" chunks
+	        markSafeChunks(info.filePath, info.regionX, info.regionZ, border, minY, maxY, radius, blockTypesMap);
 		}
 
 		System.out.println("-----------------------------------");
@@ -113,28 +115,31 @@ public class Deleter
 		for (int i = 0; i < regionFileInfos.size(); i++) {
 			RegionFileInfo info = regionFileInfos.get(i);
 	        System.out.println("Deleting chunks in " + info.filePath.toString());
-	        //find 'human active' chunks and store them in
+	        // delete chunks that aren't "saved"
 	        deleteUnsavedChunks(info.filePath, info.regionX, info.regionZ);
 		}
 	}
 
-	private void deleteUnsavedChunks(File filePath, int regionX, int regionZ) {
+	
+	/**
+	 */
+	private void deleteUnsavedChunks(File filePath, int regionX, int regionZ)
+	{
 		RegionFile regionFile = new RegionFile(filePath);
 		int chunksDeleted = 0;
 		for (int x = 0; x < 32; x++)
 		{
 			for (int z = 0; z < 32; z++)
 			{
-				if(regionFile.hasChunk(x, z))
+				if (regionFile.hasChunk(x, z))
 				{
-					int chunkX = (regionX * 32 + x);
-					int chunkZ = (regionZ * 32 + z);
+					final int chunkX = (regionX * 32 + x);
+					final int chunkZ = (regionZ * 32 + z);
+					final String id = chunkX + "_" + chunkZ;
 
-					String id = chunkX + "_" + chunkZ;
-
-					if(!markedSafe.containsKey(id)) {
+					if (!markedSafe.containsKey(id)) {
 						chunksDeleted++;
-						regionFile.deleteChunck(x, z);
+						regionFile.deleteChunk(x, z);
 					}
 				}
  			}
@@ -149,20 +154,30 @@ public class Deleter
 		}
 	}
 
-	private void markSafeChunks(File filePath, int regionX, int regionZ, int border, int minY, int maxY, HashMap<Integer, Boolean> blockTypes)
+	/**
+	 */
+	private void markSafeChunks(File filePath, int regionX, int regionZ, int border, int minY, int maxY, int radius, HashMap<Integer, Boolean> blockTypes)
 	{
-		RegionFile regionFile = new RegionFile(filePath);
-		Boolean validBlockFound;
+		final RegionFile regionFile = new RegionFile(filePath);
+
 		for (int x = 0; x < 32; x++)
 		{
 			for (int z = 0; z < 32; z++)
 			{
 				if (regionFile.hasChunk(x, z))
 				{
-					int chunkX = (regionX * 32 + x);
-					int chunkZ = (regionZ * 32 + z);
+					final int chunkX = (regionX * 32 + x);
+					final int chunkZ = (regionZ * 32 + z);
 
-					validBlockFound = false;
+					if (radius > 0) {
+						final int r = (int)Math.floor(Math.sqrt((chunkX * chunkX) + (chunkZ * chunkZ)));
+						if (r < radius) {
+							markedSafe.put(chunkX + "_" + chunkZ, true);
+							continue;
+						}
+					}
+
+					Boolean validBlockFound = false;
 
 					try
 					{
@@ -182,7 +197,7 @@ public class Deleter
 
 							for (int bx = 0; bx < 16; bx++)
 							{
-								for (int bz = 0; bz < 16; bz ++)
+								for (int bz = 0; bz < 16; bz++)
 								{
 									for (int by = 0; by < 16; by++)
 									{
@@ -191,7 +206,7 @@ public class Deleter
 										if ((minY <= realy) && (realy <= maxY))
 										{
 											// YZX coordinates
-											int blockIndex = bx + ( bz * 16 + ( by * 16 * 16 ) );
+											int blockIndex = bx + (16 * (by * 16 + bz));
 
 											// extended block IDs
 											byte a = blockIDs[blockIndex];
@@ -210,9 +225,7 @@ public class Deleter
 												{
 													for (int surZ = chunkZ - border; surZ <= chunkZ + border; surZ++)
 													{
-														String id = surX + "_" + surZ;
-														if (!markedSafe.containsKey(id))
-															markedSafe.put(id, true);
+														markedSafe.put(surX + "_" + surZ, true);
 													}
 												}
 												validBlockFound = true;

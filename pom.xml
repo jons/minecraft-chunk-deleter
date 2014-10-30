@@ -7,7 +7,7 @@
   <groupId>org.wroth.minecraft</groupId>
   <artifactId>minecraft-chunk-deleter</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <name>minecraft-chunk-deleter</name>
   <url>https://github.com/jons/minecraft-chunk-deleter</url>
 

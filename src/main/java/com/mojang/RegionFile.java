@@ -180,7 +180,7 @@ public class RegionFile {
         debug(mode, x, z, in + "\n");
     }
     
-    public synchronized void deleteChunck(int x, int z) {
+    public synchronized void deleteChunk(int x, int z) {
     	try {
 			setOffset(x,z,0);
 			setTimestamp(x, z, 0);
