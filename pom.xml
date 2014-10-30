@@ -7,12 +7,12 @@
   <groupId>org.wroth.minecraft</groupId>
   <artifactId>minecraft-chunk-deleter</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <name>minecraft-chunk-deleter</name>
   <url>https://github.com/jons/minecraft-chunk-deleter</url>
 
   <build>
-    <finalName>MCChunkDeleter</finalName>
+    <finalName>MCChunkDeleter-${project.version}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

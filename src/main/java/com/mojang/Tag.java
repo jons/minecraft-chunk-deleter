@@ -32,7 +32,8 @@ public class Tag {
 		TAG_Byte_Array,
 		TAG_String,
 		TAG_List,
-		TAG_Compound
+		TAG_Compound,
+		TAG_Int_Array
 	}
 
 	/**
@@ -64,9 +65,6 @@ public class Tag {
 	 * @param value an object that fits the tag type or a {@link Type} to create an empty TAG_List with this list type.
 	 */
 	public Tag(Type type, String name, Object value) {
-		if (type == Type.TAG_Compound)
-			if (!(value instanceof Tag[]))
-				throw new IllegalArgumentException();
 		switch (type) {
 		case TAG_End:
 			if (value != null)
@@ -118,8 +116,12 @@ public class Tag {
 			if (!(value instanceof Tag[]))
 				throw new IllegalArgumentException();
 			break;
+		case TAG_Int_Array:
+			if (!(value instanceof int[]))
+				throw new IllegalArgumentException();
+			break;
 		default:
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("");
 		}
 		this.type = type;
 		this.name = name;
@@ -312,6 +314,7 @@ public class Tag {
 				return Type.values()[lt];
 			else
 				return lo;
+		// TAG_Compound
 		case 10:
 			byte stt;
 			Tag[] tags = new Tag[0];
@@ -327,6 +330,14 @@ public class Tag {
 				tags = newTags;
 			} while (stt != 0);
 			return tags;
+		// TAG_Int_Array
+		case 11:
+			int size = dis.readInt();
+			int[] r = new int[size];
+			for (int i = 0; i < size; i++) {
+				r[i] = (int)readPayload(dis, (byte)3);
+			}
+			return r;
 		}
 		return null;
 	}

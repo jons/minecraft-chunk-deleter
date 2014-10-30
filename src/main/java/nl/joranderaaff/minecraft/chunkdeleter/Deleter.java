@@ -79,8 +79,8 @@ public class Deleter {
 		    	//total filepath
 		        File filePath = new File(levelPath.toString(), files[i]);
 		        if (filePath.isFile()) {
-				final String pathname = filePath.toString();
-				if (pathname.endsWith(".mcr")) {
+		        	final String pathname = filePath.toString();
+		        	if (pathname.endsWith(".mcr") || pathname.endsWith(".mca")) {
 			        	// Get filename parts
 			        	String[] fileNameParts = fileName.split("\\.");
 			        	// Get region coordinates from filename
@@ -88,10 +88,7 @@ public class Deleter {
 		        		int regionZ = Integer.parseInt(fileNameParts[2]);
 			        	RegionFileInfo info = new RegionFileInfo(filePath, regionX, regionZ);
 				        regionFileInfos.add(info);
-				}
-				else if (pathname.endsWith(".mca")) {
-					// TODO: support anvil file
-				}
+		        	}
 		        }
 		    }
 		}
@@ -160,7 +157,7 @@ public class Deleter {
 		{
 			for (int z = 0; z < 32; z++)
 			{
-				if(regionFile.hasChunk(x, z))
+				if (regionFile.hasChunk(x, z))
 				{
 					int chunkX = (regionX * 32 + x);
 					int chunkZ = (regionZ * 32 + z);
@@ -171,31 +168,46 @@ public class Deleter {
 					{
 						Tag tag = Tag.readFrom(regionFile.getChunkDataInputStream(x, z));
 						Tag levelData = tag.findTagByName("Level");
-						Tag blocks = levelData.findTagByName("Blocks");
-						byte[] blockIDs = (byte[]) blocks.getValue();
-
-						for(int bx = 0; bx < 16; bx++)
+						Tag sections = levelData.findTagByName("Sections");
+						Tag[] blocks = (Tag[])sections.getValue();
+						
+						for (Tag block : blocks)
 						{
-							for(int bz = 0; bz < 16; bz ++)
-							{
-								for(int by = minY; by < maxY; by++)
-								{
-									int blockIndex = by + ( bz * 128 + ( bx * 128 * 16 ) );
-									byte blockID = blockIDs[blockIndex];
-									int blockIDInt = (int) blockID & 0xFF;
+							int sy = (byte)block.findTagByName("Y").getValue();
 
-									if( blockTypes.containsKey(blockIDInt) )
+							byte[] blockIDs = (byte[]) block.findTagByName("Blocks").getValue();
+
+							for (int bx = 0; bx < 16; bx++)
+							{
+								for (int bz = 0; bz < 16; bz ++)
+								{
+									for (int by = 0; by < 16; by++)
 									{
-										for (int surX = chunkX - border; surX <= chunkX + border; surX++) {
-											for (int surZ = chunkZ - border; surZ <= chunkZ + border; surZ++) {
-												String id = surX + "_" + surZ;
-												if(!markedSafe.containsKey(id))
-													markedSafe.put(id, true);
+										int realy = (sy * 16) + by;
+										if ((minY <= realy) && (realy <= maxY))
+										{
+											int blockIndex = by + ( bz * 16 + ( bx * 16 * 16 ) );
+											byte blockID = blockIDs[blockIndex];
+											int blockIDInt = (int) blockID & 0xFF;
+		
+											if (blockTypes.containsKey(blockIDInt))
+											{
+												for (int surX = chunkX - border; surX <= chunkX + border; surX++)
+												{
+													for (int surZ = chunkZ - border; surZ <= chunkZ + border; surZ++)
+													{
+														String id = surX + "_" + surZ;
+														if (!markedSafe.containsKey(id))
+															markedSafe.put(id, true);
+													}
+												}
+												validBlockFound = true;
+												break;
 											}
 										}
-										validBlockFound = true;
-										break;
 									}
+									if(validBlockFound)
+										break;
 								}
 								if(validBlockFound)
 									break;
