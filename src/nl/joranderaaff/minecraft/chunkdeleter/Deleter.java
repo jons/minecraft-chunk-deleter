@@ -78,16 +78,17 @@ public class Deleter {
 		    	String fileName = files[i];
 		    	//total filepath
 		        File filePath = new File(levelPath.toString(), files[i]);
-		        
-		        if (filePath.isFile() && filePath.toString().endsWith("mcr")) {
-		        	// Get filename parts
-		        	String[] fileNameParts = fileName.split("\\.");
-		        	// Get region coordinates from filename
-		        	int regionX = Integer.parseInt(fileNameParts[1]);
-		        	int regionZ = Integer.parseInt(fileNameParts[2]);
-		    	
-		        	RegionFileInfo info = new RegionFileInfo(filePath, regionX, regionZ);
-			        regionFileInfos.add(info);
+		        if (filePath.isFile()) {
+				final String pathname = filePath.toString();
+				if (pathname.endsWith(".mcr") || pathname.endsWith(".mca")) {
+			        	// Get filename parts
+			        	String[] fileNameParts = fileName.split("\\.");
+			        	// Get region coordinates from filename
+		        		int regionX = Integer.parseInt(fileNameParts[1]);
+		        		int regionZ = Integer.parseInt(fileNameParts[2]);
+			        	RegionFileInfo info = new RegionFileInfo(filePath, regionX, regionZ);
+				        regionFileInfos.add(info);
+				}
 		        }
 		    }
 		} 
