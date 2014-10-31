@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mojang.LevelFile;
 import com.mojang.RegionFile;
 import com.mojang.Tag;
 
@@ -40,9 +41,13 @@ public class Deleter
 
 	public void deleteChunks(String levelPathString, String[] blockTypes, int border, int minY, int maxY, int radius)
 	{
+		// reset safe chunk list
 		markedSafe = new HashMap<String, Boolean>();
 
-		HashMap<Integer, Boolean> blockTypesMap = new HashMap<Integer, Boolean>();
+		// load level.dat 
+		final File leveldata = new File(levelPathString, "level.dat");
+		final LevelFile level = new LevelFile(leveldata);
+		final HashMap<Integer, Boolean> blockTypesMap = new HashMap<Integer, Boolean>();
 
 		int blockTypesCount = 0;
 		for (int i = 0; i < blockTypes.length; i++)
@@ -107,7 +112,7 @@ public class Deleter
 			RegionFileInfo info = regionFileInfos.get(i);
 	        System.out.println("Searching blocks in " + info.filePath.toString());
 	        // find 'human active' chunks and store them in a map of "saved" chunks
-	        markSafeChunks(info.filePath, info.regionX, info.regionZ, border, minY, maxY, radius, blockTypesMap);
+	        markSafeChunks(info.filePath, info.regionX, info.regionZ, border, minY, maxY, radius, level, blockTypesMap);
 		}
 
 		System.out.println("-----------------------------------");
@@ -156,7 +161,15 @@ public class Deleter
 
 	/**
 	 */
-	private void markSafeChunks(File filePath, int regionX, int regionZ, int border, int minY, int maxY, int radius, HashMap<Integer, Boolean> blockTypes)
+	private void markSafeChunks(File filePath,
+								int regionX,
+								int regionZ,
+								int border,
+								int minY,
+								int maxY,
+								int radius,
+								LevelFile level,
+								HashMap<Integer, Boolean> blockTypes)
 	{
 		final RegionFile regionFile = new RegionFile(filePath);
 
@@ -168,14 +181,6 @@ public class Deleter
 				{
 					final int chunkX = (regionX * 32 + x);
 					final int chunkZ = (regionZ * 32 + z);
-
-					if (radius > 0) {
-						final int r = (int)Math.floor(Math.sqrt((chunkX * chunkX) + (chunkZ * chunkZ)));
-						if (r < radius) {
-							markedSafe.put(chunkX + "_" + chunkZ, true);
-							continue;
-						}
-					}
 
 					Boolean validBlockFound = false;
 
@@ -199,6 +204,16 @@ public class Deleter
 							{
 								for (int bz = 0; bz < 16; bz++)
 								{
+									if (radius > 0) {
+										final int realX = (chunkX * 16 + bx) - level.x;
+										final int realZ = (chunkZ * 16 + bz) - level.z;
+										final int r = (int)Math.floor(Math.sqrt((realX * realX) + (realZ * realZ)));
+										if (r < radius) {
+											markedSafe.put(chunkX + "_" + chunkZ, true);
+											continue;
+										}
+									}
+
 									for (int by = 0; by < 16; by++)
 									{
 										// real Y, used to support min/max Y

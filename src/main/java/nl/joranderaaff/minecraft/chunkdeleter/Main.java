@@ -64,10 +64,8 @@ public class Main {
 		//get the blocktypes
 		String blockIDString = (String)parser.getOptionValue(blockIDsArg);
 
-		final File leveldata = new File(levelPathString, "level.dat");
-		new LevelFile(leveldata);
-		
-		if(blockIDString == null) {
+	
+		if (blockIDString == null) {
 			System.out.println("There are no blocktypes found in the arguments");
 			return;
 		}
